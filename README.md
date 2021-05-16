@@ -1,1 +1,1 @@
-# AKS_mediawiki
+# AKS_Mediawiki
