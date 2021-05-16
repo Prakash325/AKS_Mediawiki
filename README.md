@@ -21,11 +21,11 @@
 
 You can refer to this Microsoft document for more details: [Azure login using SP](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli#sign-in-using-a-service-principal "Azure login using SP")
 
-####2. Clone the repo
+#### 2. Clone the repo
 ----------------------------------------
 		 git clone <repo url>
 
-####3. Execute `deployment.sh` file
+#### 3. Execute `deployment.sh` file
 -------------------------------------------
 	 ./deployment.sh
 
@@ -33,11 +33,11 @@ You can refer to this Microsoft document for more details: [Azure login using SP
 - Invokes Terraform to provision an AKS cluster in your Azure subscription.
 - Then deploys the mediawiki workload using helm.
 
-####4. After completion, copy the endpoints to access the mediawiki website hosted in AKS
+#### 4. After completion, copy the endpoints to access the mediawiki website hosted in AKS
 	 export SERVICE_IP=$(kubectl get svc --namespace default mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
 	 echo "Mediawiki URL: http://$SERVICE_IP/"
 
-####5. Get your MediaWiki login credentials by running:
+#### 5. Get your MediaWiki login credentials by running:
 	echo Username: user
 	echo Password: $(kubectl get secret --namespace default mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
 
