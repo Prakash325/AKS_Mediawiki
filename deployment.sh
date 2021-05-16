@@ -24,6 +24,8 @@ export KUBECONFIG="${PWD}/kubeconfig"
 
 echo "Cluster deployment completed. Initializing workloads deployment..."
 
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
 helm install mediawiki bitnami/mediawiki
 
 sleep 60
