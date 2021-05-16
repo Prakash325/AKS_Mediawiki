@@ -8,7 +8,7 @@ echo "Setup complete"
 
 echo "Initializing infrastructure deployment..."
 
-cd ~/AKS_Mediawiki/app_infra/
+cd ${HOME}/AKS_mediawiki/app_infra/
 
 terraform init
 
