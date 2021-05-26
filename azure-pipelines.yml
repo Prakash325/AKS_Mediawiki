@@ -19,8 +19,8 @@ stages:
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifacts
         inputs:
-          targetPath: '$(System.DefaultWorkingDirectory)/aks_infra'
-          artifact: 'aks_infra-out'
+          targetPath: '$(System.DefaultWorkingDirectory)/app_infra'
+          artifact: 'app_infra-out'
           publishLocation: 'pipeline' 
       - task: TerraformInstaller@0
         displayName: Terraform Install
@@ -30,7 +30,7 @@ stages:
         displayName: Terraform Init
         inputs:
           command: 'init'
-          workingDirectory: '$(System.DefaultWorkingDirectory)/aks_infra'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/app_infra'
           backendType: 'azurerm'
           backendServiceArm: 'terraform-test-conn'
           ensureBackend: true
@@ -45,7 +45,7 @@ stages:
         displayName: Terraform Validate
         inputs:
           command: 'validate'
-          workingDirectory: '$(System.DefaultWorkingDirectory)/aks_infra'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/app_infra'
           allowTelemetryCollection: false
 - stage: DeployAKSCluster
   jobs:
@@ -53,7 +53,7 @@ stages:
       displayName: Deploy AKS cluster
       pool:
         vmImage: 'ubuntu-latest'
-      environment: ${DEV_ENVIRONMENT}
+      environment: $(DEV_ENVIRONMENT)
       strategy:
         runOnce:
           deploy:
@@ -68,7 +68,7 @@ stages:
               displayName: Terraform Init
               inputs:
                 command: 'init'
-                workingDirectory: '$(Pipeline.Workspace)/aks_infra-out'
+                workingDirectory: '$(Pipeline.Workspace)/app_infra-out'
                 backendType: 'azurerm'
                 backendServiceArm: 'terraform-test-conn'
                 backendAzureRmResourceGroupName: 'cloud-shell-storage-centralindia'
@@ -80,15 +80,15 @@ stages:
               displayName: Terraform Plan
               inputs:
                 command: 'plan'
-                workingDirectory: '$(Pipeline.Workspace)/aks_infra-out'
+                workingDirectory: '$(Pipeline.Workspace)/app_infra-out'
                 environmentServiceName: 'terraform-test-conn'
-                commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -out $(Pipeline.Workspace)/aks_infra-out/$(DEV_ENVIRONMENT)-$(Build.BuildId).out'
+                commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -out $(Pipeline.Workspace)/app_infra-out/$(DEV_ENVIRONMENT)-$(Build.BuildId).out'
                 allowTelemetryCollection: false
             - task: TerraformCLI@0
               displayName: Terraform Apply
               inputs:
                 command: 'apply'
-                workingDirectory: '$(Pipeline.Workspace)/aks_infra-out'
+                workingDirectory: '$(Pipeline.Workspace)/app_infra-out'
                 environmentServiceName: 'terraform-test-conn'
-                commandOptions: '$(Pipeline.Workspace)/aks_infra-out/$(DEV_ENVIRONMENT)-$(Build.BuildId).out'
+                commandOptions: '$(Pipeline.Workspace)/app_infra-out/$(DEV_ENVIRONMENT)-$(Build.BuildId).out'
                 allowTelemetryCollection: false
