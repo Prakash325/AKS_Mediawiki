@@ -4,6 +4,12 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
+variables:
+- name: DEV_ENVIRONMENT
+  value: dev
+- name: QA_ENVIRONMENT
+  value: qa 
+
 stages:
 - stage: TerraformValidate
   jobs:
@@ -13,8 +19,8 @@ stages:
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifacts
         inputs:
-          targetPath: '$(System.DefaultWorkingDirectory)/app_infra'
-          artifact: 'app_infra-out'
+          targetPath: '$(System.DefaultWorkingDirectory)/aks_infra'
+          artifact: 'aks_infra-out'
           publishLocation: 'pipeline' 
       - task: TerraformInstaller@0
         displayName: Terraform Install
@@ -24,7 +30,7 @@ stages:
         displayName: Terraform Init
         inputs:
           command: 'init'
-          workingDirectory: '$(System.DefaultWorkingDirectory)/app_infra'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/aks_infra'
           backendType: 'azurerm'
           backendServiceArm: 'terraform-test-conn'
           ensureBackend: true
@@ -39,5 +45,50 @@ stages:
         displayName: Terraform Validate
         inputs:
           command: 'validate'
-          workingDirectory: '$(System.DefaultWorkingDirectory)/app_infra'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/aks_infra'
           allowTelemetryCollection: false
+- stage: DeployAKSCluster
+  jobs:
+    - deployment: DeployDevAKSCluster
+      displayName: Deploy AKS cluster
+      pool:
+        vmImage: 'ubuntu-latest'
+      environment: ${DEV_ENVIRONMENT}
+      strategy:
+        runOnce:
+          deploy:
+           steps:
+            - task: DownloadSecureFile@1
+              name: sshkey
+              displayName: Download SSH Key
+              inputs:
+                secureFile: 'id_rsa.pub'
+
+            - task: TerraformCLI@0
+              displayName: Terraform Init
+              inputs:
+                command: 'init'
+                workingDirectory: '$(Pipeline.Workspace)/aks_infra-out'
+                backendType: 'azurerm'
+                backendServiceArm: 'terraform-test-conn'
+                backendAzureRmResourceGroupName: 'cloud-shell-storage-centralindia'
+                backendAzureRmStorageAccountName: 'csg100320006f583690'
+                backendAzureRmContainerName: 'terraformstate'
+                backendAzureRmKey: 'aks-$(DEV_ENVIRONMENT).tfstate'
+                allowTelemetryCollection: false
+            - task: TerraformCLI@0
+              displayName: Terraform Plan
+              inputs:
+                command: 'plan'
+                workingDirectory: '$(Pipeline.Workspace)/aks_infra-out'
+                environmentServiceName: 'terraform-test-conn'
+                commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -out $(Pipeline.Workspace)/aks_infra-out/$(DEV_ENVIRONMENT)-$(Build.BuildId).out'
+                allowTelemetryCollection: false
+            - task: TerraformCLI@0
+              displayName: Terraform Apply
+              inputs:
+                command: 'apply'
+                workingDirectory: '$(Pipeline.Workspace)/aks_infra-out'
+                environmentServiceName: 'terraform-test-conn'
+                commandOptions: '$(Pipeline.Workspace)/aks_infra-out/$(DEV_ENVIRONMENT)-$(Build.BuildId).out'
+                allowTelemetryCollection: false
