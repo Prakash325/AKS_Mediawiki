@@ -1,0 +1,43 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: TerraformValidate
+  jobs:
+    - job: TerraformValidateJob
+      continueOnError: false
+      steps:
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Artifacts
+        inputs:
+          targetPath: '$(System.DefaultWorkingDirectory)/aks_infra'
+          artifact: 'aks_infra-out'
+          publishLocation: 'pipeline' 
+      - task: TerraformInstaller@0
+        displayName: Terraform Install
+        inputs:
+          terraformVersion: 'latest'
+      - task: TerraformCLI@0
+        displayName: Terraform Init
+        inputs:
+          command: 'init'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/aks_infra'
+          backendType: 'azurerm'
+          backendServiceArm: 'terraform-test-conn'
+          ensureBackend: true
+          backendAzureRmResourceGroupName: 'cloud-shell-storage-centralindia'
+          backendAzureRmResourceGroupLocation: 'Central India'
+          backendAzureRmStorageAccountName: 'csg100320006f583690'
+          backendAzureRmStorageAccountSku: 'Locally-redundant storage (LRS)'
+          backendAzureRmContainerName: 'terraformstate'
+          backendAzureRmKey: 'aks-base.tfstate'
+          allowTelemetryCollection: false
+      - task: TerraformCLI@0
+        displayName: Terraform Validate
+        inputs:
+          command: 'validate'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/aks_infra'
+          allowTelemetryCollection: false
