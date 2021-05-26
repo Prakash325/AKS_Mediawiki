@@ -13,8 +13,8 @@ stages:
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifacts
         inputs:
-          targetPath: '$(System.DefaultWorkingDirectory)/aks_infra'
-          artifact: 'aks_infra-out'
+          targetPath: '$(System.DefaultWorkingDirectory)/app_infra'
+          artifact: 'app_infra-out'
           publishLocation: 'pipeline' 
       - task: TerraformInstaller@0
         displayName: Terraform Install
@@ -24,7 +24,7 @@ stages:
         displayName: Terraform Init
         inputs:
           command: 'init'
-          workingDirectory: '$(System.DefaultWorkingDirectory)/aks_infra'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/app_infra'
           backendType: 'azurerm'
           backendServiceArm: 'terraform-test-conn'
           ensureBackend: true
@@ -39,5 +39,5 @@ stages:
         displayName: Terraform Validate
         inputs:
           command: 'validate'
-          workingDirectory: '$(System.DefaultWorkingDirectory)/aks_infra'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/app_infra'
           allowTelemetryCollection: false
